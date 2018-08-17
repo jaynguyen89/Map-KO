@@ -1,0 +1,71 @@
+.myNavbar {
+    background-color: #f8f8f8;
+    margin-top: 0;
+    width: 100%;
+    border-bottom: 1px solid #e7e7e7;
+}
+
+.myHeader {
+    margin: 30px auto 0 0;
+    background-color: transparent;
+}
+
+.leftImage {
+    margin-left: 0;
+}
+
+.headerText {
+    margin-top: 35px !important;
+}
+
+.myHeaderColor {
+    color: #3498DB !important;
+}
+
+.introduction {
+    width: 100%;
+    margin: 15px auto;
+}
+
+.introduction .h1 {
+    color: #333;
+    text-decoration: underline;
+}
+
+.introduction .p {
+    color: #515157;
+    font-size: 1em;
+}
+
+.footer-container {
+    width: 100%;
+    text-align: center;
+    position: absolute;
+    bottom: 0;
+}
+
+.footer {
+    background-color: #222;
+    padding: 20px;
+    color: white;
+}
+
+.spin-left {
+    animation: left-spinning infinite 20s linear;
+    margin-right: 5px;
+}
+
+@keyframes left-spinning {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
+}
+
+.spin-right {
+    animation: right-spinning infinite 20s linear;
+    margin-left: 5px;
+}
+
+@keyframes right-spinning {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

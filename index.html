@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#000000">
+    
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/semantic.css">
+    <link rel="stylesheet" href="css/custom.css">
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <title>Map-KO Demo</title>
+  </head>
+  <body>
+    <div class="myNavbar">
+      <div class="ui container" style="margin-bottom: 30px;">
+        <div class="ui container stackable grid">
+            <div class="left floated eight wide column">
+                <div class="myHeader">
+                  <header className="App-header" style="margin-top: 25px;">
+                    <img src="files/jaydev.PNG" class="ui small image" alt="logo" />
+                  </header>
+                </div>
+            </div>
+            <div class="right floated center aligned eight wide column">
+                <h2 class="myHeaderColor headerText">Google Maps API & KnockOut JS</h1>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <noscript>
+      <div style="width: 100%; text-align: center; margin-top: 150px;">
+        <h1>
+            <p style="color: orangered; font-size: 3em;">&#9888;</p>
+            Please enable Javascript in your browser to run this app.
+        </h1>
+      </div>
+    </noscript>
+
+    <div class="ui container">
+        <div class="introduction">
+        <h1>Introduction</h1>
+        <p>This app is created to demo my recent research on <b>KnockOut JS</b> and more in this, I would like to also demo a simple use of <b>Google Maps API</b>.</p>
+        <p>The contents of this app include the following functionalities:</p>
+        <ul>
+            <li>Displaying a list of people, selecting a person will display their information and location on map.</li>
+            <li>Editting a person's details will also updating the people list and the map, allowing auto-detecting location.</li>
+            <li>Selecting any 2 people to view their distance and navigation route on map.</li>
+            <li>(Non-functional) Preventing all types of bugs and misbehaviors of the functionalities.</li>
+        </ul>
+        <p>Please give it an upvote if you like it. Thank you!</p>
+        </div>
+
+        <div class="main-content" id="root"></div>
+
+        <script type="text/javascript">
+            $("document").ready(function () {
+                $.get("html/main.html", function(content) {
+                    $("#root").html(content);
+                });
+            });
+        </script>
+    </div>
+
+    <div class="footer-container">
+      <header class="footer">
+        <img src="files/google-api.png" class="spin-left" alt="google" width="110px" />
+        <img src="files/ko-logo.PNG" class="spin-right" alt="knockout" width="100px" />
+      </header>
+    </div>
+
+    <script src="js/knockout-3.5.0rc.js"></script>
+    <script src="js/custom.js"></script>
+    <script src="js/semantic.js"></script>
+  </body>
+</html>
