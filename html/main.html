@@ -1,5 +1,94 @@
 <script src="http://maps.google.com/maps/api/js?key=AIzaSyDIV7IfLNIo11RUa_YeAShe46nSgPJpQEY&language=en"></script>
 
 <div class="row">
-    This is main content.
+    <table class="ui compact celled definition blue table">
+        <thead class="full-width">
+            <tr>
+                <th>Select</th>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Birthday</th>
+            </tr>
+        </thead>
+        <tbody data-bind="with: People">
+            <tr data-bind="foreach: People">
+                <td class="collapsing">
+                    <div class="ui fitted slider checkbox">
+                        <input id="" type="checkbox"><label></label>
+                    </div>
+                </td>
+                <th data-bind="text: Id"></th>
+                <th data-bind="text: FullName"></th>
+                <th data-bind="text: Email"></th>
+                <th data-bind="text: Phone"></th>
+                <th data-bind="text: Birth"></th>
+            </tr>
+        </tbody>
+        <tfoot class="full-width">
+            <tr>
+                <th></th>
+                <th colspan="5">
+                    <div class="ui right floated small primary labeled icon button">
+                        <i class="user icon"></i> Add User
+                    </div>
+                    <div class="ui small button">
+                        Approve
+                    </div>
+                    <div class="ui small  disabled button">
+                        Approve All
+                    </div>
+                </th>
+            </tr>
+        </tfoot>
+    </table>
 </div>
+
+<script type="text/javascript">
+    var data = (function () {
+        var json = null;
+        $.ajax({
+            'async': false,
+            'global': false,
+            'url': "files/model.json",
+            'dataType': "json",
+            'success': function (data) {
+                json = data;
+            }
+        });
+        return json;
+    })();
+
+    function PeopleModel(people) {//alert(people.FamilyName);
+        var self = this;
+        self.Id = people.id;
+        self.FamilyName = people.FamilyName ? ko.observable(people.FamilyName) : ko.observable();
+        self.GiveName = people.GiveName ? ko.observable(people.GiveName) : ko.observable();
+        self.FullName = ko.computed(function() {
+            return self.GiveName + " " + FullName;
+        });
+        self.Email = people.Email ? ko.observable(people.Email) : ko.observable();
+        self.Phone = people.Phone ? ko.observable(people.Phone) : ko.observable();
+        self.Birth = people.Birth ? ko.observable(people.Birth) : ko.observable();
+        self.BuildingAddress = people.BuildingAddress ? ko.observable(people.BuildingAddress) : ko.observable();
+        self.StreetAddress = people.StreetAddress ? ko.observable(people.StreetAddress) : ko.observable();
+        self.AlternateAddress = people.AlternateAddress ? ko.observable(people.AlternateAddress) : ko.observable();
+        self.Suburb = people.Suburb ? ko.observable(people.Suburb) : ko.observable();
+        self.Postcode = people.Postcode ? ko.observable(people.Postcode) : ko.observable();
+        self.SelectedState = people.State ? ko.observable(people.State) : ko.observable();
+    }
+
+    function ViewModel() {
+        var self = this;
+        self.STATES = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
+
+        self.People = ko.observableArray();
+        for (var i in data) {
+            var people = new PeopleModel(data[i]);
+            self.People.push(people);
+        }
+    }
+
+    ko.dataBinds(new ViewModel());
+</script>
