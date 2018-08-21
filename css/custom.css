@@ -37,10 +37,14 @@
     font-size: 1em;
 }
 
+.mainContent {
+    margin: 20px auto;
+}
+
 .footer-container {
     width: 100%;
     text-align: center;
-    position: absolute;
+    /*position: absolute;*/
     bottom: 0;
 }
 

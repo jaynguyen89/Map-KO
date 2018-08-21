@@ -1,26 +1,81 @@
-<script src="http://maps.google.com/maps/api/js?key=AIzaSyDIV7IfLNIo11RUa_YeAShe46nSgPJpQEY&language=en"></script>
+<style type="text/css">
+    .microBtn {
+        padding: 3px !important;
+        font-size: 10px !important;
+        border-radius: 3px !important;
+        margin-top: 2px !important;
+    }
 
-<div class="row">
-    <table class="ui compact celled definition blue table">
+    .myTable {
+        margin-top: 0px !important;
+    }
+
+    .myMap {
+        margin-bottom: 20px;
+    }
+
+    .setView {
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="row mainContent">
+    <div class="row setView">
+        <div class="ui two column centered grid">
+            <div class="column">
+                <span for="view"><b>Select a view mode:</b>&nbsp;</span>
+                <select name="View" class="ui dropdown"
+                        data-bind="options: VIEWS, value: SelectedView, valueUpdate: 'afterkeydown', event: {change: $root.switchView}">
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="ui right labeled input">
+        <input type="text" placeholder="Search a person ...">
+        <div class="ui dropdown label">
+            <div class="text">By Name</div>
+            <i class="dropdown icon"></i>
+            <div class="menu">
+                <div class="item">By Name</div>
+                <div class="item">By Email</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="main_map" class="ui embed myMap"></div>
+    
+    <table id="main_table" class="myTable ui compact celled definition blue table" data-bind="with: $root.People">
         <thead class="full-width">
             <tr>
-                <th>Select</th>
-                <th>#</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Birthday</th>
+                <th class="center aligned"><i class="fas fa-hand-point-up"></i></th>
+                <th class="center aligned"><i class="fas fa-hashtag"></i></th>
+                <th class="center aligned"><i class="fas fa-signature"></i> Name</th>
+                <th class="center aligned"><i class="fas fa-envelope"></i> Email</th>
+                <th class="center aligned"><i class="fas fa-phone"></i> Phone</th>
+                <th class="center aligned"><i class="fas fa-birthday-cake"></i> Birthday</th>
             </tr>
         </thead>
-        <tbody data-bind="with: People">
-            <tr data-bind="foreach: People">
+        <tbody data-bind="foreach: $root.People">
+            <tr>
                 <td class="collapsing">
                     <div class="ui fitted slider checkbox">
                         <input id="" type="checkbox"><label></label>
                     </div>
                 </td>
                 <th data-bind="text: Id"></th>
-                <th data-bind="text: FullName"></th>
+                <th>
+                    <div class="ui stackable two column grid">
+                        <div class="column">
+                            <span data-bind="text: FullName"></span>
+                        </div>
+                        <div class="column">
+                            <button class="microBtn ui red button right floated">Delete</button>
+                            <button class="microBtn ui orange button right floated">Edit</button>
+                            <button class="microBtn ui blue button right floated">Details</button>
+                        </div>
+                    </div>
+                </th>
                 <th data-bind="text: Email"></th>
                 <th data-bind="text: Phone"></th>
                 <th data-bind="text: Birth"></th>
@@ -30,14 +85,14 @@
             <tr>
                 <th></th>
                 <th colspan="5">
-                    <div class="ui right floated small primary labeled icon button">
-                        <i class="user icon"></i> Add User
+                    <div class="ui right floated small red icon button">
+                        <i class="fas fa-reply"></i> Revert to Default
                     </div>
-                    <div class="ui small button">
-                        Approve
+                    <div class="ui right floated small primary icon button">
+                        <i class="fas fa-user-plus"></i> Add People
                     </div>
-                    <div class="ui small  disabled button">
-                        Approve All
+                    <div class="ui left floated small green icon button">
+                        <i class="fas fa-route"></i> Distance
                     </div>
                 </th>
             </tr>
@@ -46,6 +101,12 @@
 </div>
 
 <script type="text/javascript">
+    var map = new google.maps.Map(document.getElementById('main_map'), {
+        zoom: 14,
+        center: new google.maps.LatLng(-37.8104504, 144.9629779),
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    });
+
     var data = (function () {
         var json = null;
         $.ajax({
@@ -60,35 +121,61 @@
         return json;
     })();
 
-    function PeopleModel(people) {//alert(people.FamilyName);
+    function PeopleModel(people) {
         var self = this;
-        self.Id = people.id;
-        self.FamilyName = people.FamilyName ? ko.observable(people.FamilyName) : ko.observable();
-        self.GiveName = people.GiveName ? ko.observable(people.GiveName) : ko.observable();
-        self.FullName = ko.computed(function() {
-            return self.GiveName + " " + FullName;
-        });
-        self.Email = people.Email ? ko.observable(people.Email) : ko.observable();
-        self.Phone = people.Phone ? ko.observable(people.Phone) : ko.observable();
-        self.Birth = people.Birth ? ko.observable(people.Birth) : ko.observable();
-        self.BuildingAddress = people.BuildingAddress ? ko.observable(people.BuildingAddress) : ko.observable();
-        self.StreetAddress = people.StreetAddress ? ko.observable(people.StreetAddress) : ko.observable();
-        self.AlternateAddress = people.AlternateAddress ? ko.observable(people.AlternateAddress) : ko.observable();
-        self.Suburb = people.Suburb ? ko.observable(people.Suburb) : ko.observable();
-        self.Postcode = people.Postcode ? ko.observable(people.Postcode) : ko.observable();
-        self.SelectedState = people.State ? ko.observable(people.State) : ko.observable();
+        self.Id = people.Id;
+        self.FamilyName = people.FamilyName ? ko.observable(people.FamilyName) : ko.observable("");
+        self.GiveName = people.GiveName ? ko.observable(people.GiveName) : ko.observable("");
+        self.FullName = ko.observable("");
+        self.Email = people.Email ? ko.observable(people.Email) : ko.observable("");
+        self.Phone = people.Phone ? ko.observable(people.Phone) : ko.observable("");
+        self.Birth = people.Birth ? ko.observable(people.Birth) : ko.observable("");
+        self.BuildingAddress = people.BuildingAddress ? ko.observable(people.BuildingAddress) : ko.observable("");
+        self.StreetAddress = people.StreetAddress ? ko.observable(people.StreetAddress) : ko.observable("");
+        self.AlternateAddress = people.AlternateAddress ? ko.observable(people.AlternateAddress) : ko.observable("");
+        self.Suburb = people.Suburb ? ko.observable(people.Suburb) : ko.observable("");
+        self.Postcode = people.Postcode ? ko.observable(people.Postcode) : ko.observable("");
+        self.State = people.State ? ko.observable(people.State) : ko.observable("");
     }
 
     function ViewModel() {
         var self = this;
         self.STATES = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
+        self.VIEWS = ["Both Views", "Map View", "Table View"];
+        self.SelectedView = ko.observable("Both Views");
+        
+        self.switchView = function () {
+            if (self.SelectedView() === "Map View") {
+                $("#main_map").show("fast");
+                $("#main_table").hide("fast");
+            }
+
+            if (self.SelectedView() === "Table View") {
+                $("#main_map").hide("fast");
+                $("#main_table").show("fast");
+            }
+            
+            if (self.SelectedView() === "Both Views") {
+                $("#main_map").show("fast");
+                $("#main_table").show("fast");
+            }
+        }
 
         self.People = ko.observableArray();
-        for (var i in data) {
-            var people = new PeopleModel(data[i]);
+        for (var k in data) {
+            var people = new PeopleModel(ko.toJS(data[k]));
+            people.FullName = ko.computed(function () {
+                let fullName = people.GiveName() + " " + people.FamilyName();
+                return fullName;
+            });
+
             self.People.push(people);
         }
     }
+    
+    ko.applyBindings(new ViewModel());
 
-    ko.dataBinds(new ViewModel());
+    $("document").ready(function () {
+        $('.ui.dropdown').dropdown();
+    });
 </script>
