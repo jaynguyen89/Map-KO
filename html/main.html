@@ -17,15 +17,28 @@
     .setView {
         margin-bottom: 20px;
     }
+
+    #outerDiv {
+        position: relative;
+    }
+
+    #view_people {
+        position: absolute;
+        top: 60px;
+        left: 30px;
+        width: 260px;
+    }
+
+    .clearfix { clear: both; }
 </style>
 
 <div class="row mainContent">
     <div class="row setView">
         <div class="ui two column centered grid">
             <div class="column">
-                <span for="view"><b>Select a view mode:</b>&nbsp;</span>
+                <span><b>Select a view mode:</b>&nbsp;</span>
                 <select name="View" class="ui dropdown"
-                        data-bind="options: VIEWS, value: SelectedView, valueUpdate: 'afterkeydown', event: {change: $root.switchView}">
+                        data-bind="options: VIEWS, value: SelectedView, valueUpdate: 'afterkeydown', event: { change: $root.switchView }">
                 </select>
             </div>
         </div>
@@ -43,8 +56,12 @@
         </div>
     </div>
     
-    <div id="main_map" class="ui embed myMap"></div>
-    
+    <div id="outerDiv">
+        <div id="main_map" class="ui embed myMap"></div>
+        <div class="clearfix"></div>
+        <div id="view_people"></div>
+    </div>
+
     <table id="main_table" class="myTable ui compact celled definition blue table" data-bind="with: $root.People">
         <thead class="full-width">
             <tr>
@@ -102,8 +119,8 @@
 
 <script type="text/javascript">
     var map = new google.maps.Map(document.getElementById('main_map'), {
-        zoom: 14,
-        center: new google.maps.LatLng(-37.8104504, 144.9629779),
+        zoom: 4.5,
+        center: new google.maps.LatLng(-25.656515, 133.245630),
         mapTypeId: google.maps.MapTypeId.ROADMAP
     });
 
@@ -136,6 +153,8 @@
         self.Suburb = people.Suburb ? ko.observable(people.Suburb) : ko.observable("");
         self.Postcode = people.Postcode ? ko.observable(people.Postcode) : ko.observable("");
         self.State = people.State ? ko.observable(people.State) : ko.observable("");
+        self.NormalizedAddress = ko.observable("");
+        self.Note = people.Note ? ko.observable(people.Note) : ko.observable("");
     }
 
     function ViewModel() {
@@ -146,18 +165,18 @@
         
         self.switchView = function () {
             if (self.SelectedView() === "Map View") {
-                $("#main_map").show("fast");
-                $("#main_table").hide("fast");
+                $("#main_map").show("slow");
+                $("#main_table").hide("slow");
             }
 
             if (self.SelectedView() === "Table View") {
-                $("#main_map").hide("fast");
-                $("#main_table").show("fast");
+                $("#main_map").hide("slow");
+                $("#main_table").show("slow");
             }
             
             if (self.SelectedView() === "Both Views") {
-                $("#main_map").show("fast");
-                $("#main_table").show("fast");
+                $("#main_map").show("slow");
+                $("#main_table").show("slow");
             }
         }
 
@@ -169,8 +188,94 @@
                 return fullName;
             });
 
+            people.NormalizedAddress = ko.computed(function () {
+                let building = (people.BuildingAddress().length === 0 ? "" : people.BuildingAddress() + ", "); 
+                let street = (people.StreetAddress().length === 0 ? "" : people.StreetAddress() + ", "); 
+                let suburb = (people.Suburb().length === 0 ? "" : people.Suburb() + ", ");
+
+                if (!building && !street && !suburb)
+                return "More information needed.";
+            
+                return building + street + suburb + people.State() + " " + people.Postcode();
+            });
+
             self.People.push(people);
         }
+
+        self.locations = ko.computed(function () {
+            var locs = [];
+            ko.utils.arrayForEach(self.People(), function(p) {
+                let tokens = p.Note().split(",");
+                let lat = tokens.length === 2 ? tokens[0] : 0;
+                let long = tokens.length === 2 ? tokens[1] : 0;
+
+                var loc = [p.Id, p.FullName, p.Email, p.Phone, p.Birth, parseFloat(lat), parseFloat(long)];
+                locs.push(loc);
+            });
+
+            return locs;
+        }, self);
+
+        var infowindow = new google.maps.InfoWindow();
+        var marker;
+
+        for (var i = 0; i < self.locations().length; i++) {
+            if (self.locations()[i][5] === 0 || self.locations()[i][6] === 0)
+                continue;
+            
+            marker = new google.maps.Marker({
+                position: new google.maps.LatLng(self.locations()[i][5], self.locations()[i][6]),
+                title: self.locations()[i][0],
+                map: map
+            });
+
+            google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                return function() {
+                    infowindow.setContent(self.locations()[i][1]());
+                    infowindow.open(map, marker);
+                    self.getMarkerState(this);
+                }
+            })(marker, i));
+
+            google.maps.event.addListener(infowindow, 'closeclick', function () {
+                closeMarkerContents();
+            });
+        }
+        
+        self.getMarkerState = function (marker) {
+            let SelectedPeople = self.People()[marker.title - 1];
+            displayMarkerContents(SelectedPeople);
+        }
+    }
+
+    function displayMarkerContents(people) {
+        let email = (people.Email().length ? people.Email() : "awaiting update!");
+        let phone = (people.Phone().length ? people.Phone() : "---");
+        let birth = (people.Birth().length ? people.Birth() : "---");
+
+        var content = '' +
+        '<div class="ui card">' +
+            '<div class="content">' +
+                '<div class="header" style="font-size: 16px;">' + people.FullName() + '</div>' +
+                '<div class="meta" style="font-size: 12px;"><i class="fas fa-envelope"></i> ' + email + '</div>' +
+                '<div class="meta" style="font-size: 12px;">' +
+                    '<i class="fas fa-phone"></i> ' + phone + '&emsp;|&emsp;<i class="fas fa-birthday-cake"></i> ' + birth +
+                '</div>' +
+                '<div class="description" style="font-size: 13px;"><i class="fas fa-map-marked-alt"></i> ' + people.NormalizedAddress() + '</div>' +
+                '<div class="row">' +
+                    '<button class="microBtn ui red button right floated">Delete</button>' +
+                    '<button class="microBtn ui orange button right floated">Edit</button>' +
+                    '<button class="microBtn ui blue button right floated">Details</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+        
+        $("#view_people").html(content);
+        $("#view_people").show("slow");
+    }
+
+    function closeMarkerContents() {
+        $("#view_people").hide("slow");
     }
     
     ko.applyBindings(new ViewModel());
