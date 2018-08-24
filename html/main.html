@@ -59,7 +59,24 @@
     <div id="outerDiv">
         <div id="main_map" class="ui embed myMap"></div>
         <div class="clearfix"></div>
-        <div id="view_people"></div>
+        <div id="view_people" data-bind="visible: $root.ShouldShowMarkerContent">
+            <div class="ui card" data-bind="with: $root.SelectedPeople">
+                <div class="content">
+                    <div class="header" style="font-size: 16px;" data-bind="text: '#' + Id + ' | ' + FullName()"></div>
+                    <div class="meta" style="font-size: 12px;" data-bind="text: Email"></div>
+                    <div class="meta" style="font-size: 12px;" data-bind="text: Phone() + ' | ' + Birth()"></div>
+                    <div class="description">
+                        <i class="fas fa-map-marked-alt"></i>&nbsp;
+                        <span style="font-size: 13px;" data-bind="text: NormalizedAddress"></span>
+                    </div>
+                    <div class="row">
+                        <button class="microBtn ui blue button">Select</button>
+                        <button class="microBtn ui red button right floated" data-bind="click: $root.deletePeople.bind(this, Id)">Delete</button>
+                        <button class="microBtn ui orange button right floated" data-bind="click: $root.editPeople.bind(this, Id)">Edit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <table id="main_table" class="myTable ui compact celled definition blue table" data-bind="with: $root.People">
@@ -74,7 +91,7 @@
             </tr>
         </thead>
         <tbody data-bind="foreach: $root.People">
-            <tr>
+            <tr data-bind="visible: IsActive">
                 <td class="collapsing">
                     <div class="ui fitted slider checkbox">
                         <input id="" type="checkbox"><label></label>
@@ -87,8 +104,8 @@
                             <span data-bind="text: FullName"></span>
                         </div>
                         <div class="column">
-                            <button class="microBtn ui red button right floated">Delete</button>
-                            <button class="microBtn ui orange button right floated">Edit</button>
+                            <button class="microBtn ui red button right floated" data-bind="click: $root.deletePeople">Delete</button>
+                            <button class="microBtn ui orange button right floated" data-bind="click: $root.editPeople">Edit</button>
                             <button class="microBtn ui blue button right floated">Details</button>
                         </div>
                     </div>
@@ -118,11 +135,8 @@
 </div>
 
 <script type="text/javascript">
-    var map = new google.maps.Map(document.getElementById('main_map'), {
-        zoom: 4.5,
-        center: new google.maps.LatLng(-25.656515, 133.245630),
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-    });
+    var infowindow = new google.maps.InfoWindow();
+    var marker;
 
     var data = (function () {
         var json = null;
@@ -144,9 +158,9 @@
         self.FamilyName = people.FamilyName ? ko.observable(people.FamilyName) : ko.observable("");
         self.GiveName = people.GiveName ? ko.observable(people.GiveName) : ko.observable("");
         self.FullName = ko.observable("");
-        self.Email = people.Email ? ko.observable(people.Email) : ko.observable("");
-        self.Phone = people.Phone ? ko.observable(people.Phone) : ko.observable("");
-        self.Birth = people.Birth ? ko.observable(people.Birth) : ko.observable("");
+        self.Email = people.Email ? ko.observable(people.Email) : ko.observable("Email not given.");
+        self.Phone = people.Phone ? ko.observable(people.Phone) : ko.observable("---");
+        self.Birth = people.Birth ? ko.observable(people.Birth) : ko.observable("---");
         self.BuildingAddress = people.BuildingAddress ? ko.observable(people.BuildingAddress) : ko.observable("");
         self.StreetAddress = people.StreetAddress ? ko.observable(people.StreetAddress) : ko.observable("");
         self.AlternateAddress = people.AlternateAddress ? ko.observable(people.AlternateAddress) : ko.observable("");
@@ -155,6 +169,7 @@
         self.State = people.State ? ko.observable(people.State) : ko.observable("");
         self.NormalizedAddress = ko.observable("");
         self.Note = people.Note ? ko.observable(people.Note) : ko.observable("");
+        self.IsActive = ko.observable(people.IsActive);
     }
 
     function ViewModel() {
@@ -205,79 +220,76 @@
         self.locations = ko.computed(function () {
             var locs = [];
             ko.utils.arrayForEach(self.People(), function(p) {
-                let tokens = p.Note().split(",");
-                let lat = tokens.length === 2 ? tokens[0] : 0;
-                let long = tokens.length === 2 ? tokens[1] : 0;
+                if (p.IsActive()) {
+                    let tokens = p.Note().split(",");
+                    let lat = tokens.length === 2 ? tokens[0] : 0;
+                    let long = tokens.length === 2 ? tokens[1] : 0;
 
-                var loc = [p.Id, p.FullName, p.Email, p.Phone, p.Birth, parseFloat(lat), parseFloat(long)];
-                locs.push(loc);
+                    var loc = [p.Id, p.FullName, p.Email, p.Phone, p.Birth, parseFloat(lat), parseFloat(long)];
+                    locs.push(loc);
+                }
             });
 
             return locs;
         }, self);
 
-        var infowindow = new google.maps.InfoWindow();
-        var marker;
+        self.ShouldShowMarkerContent = ko.observable(false);
+        self.SelectedMarker = ko.observable();
+        
+        self.getMarkerState = function (marker) {
+            self.SelectedMarker(self.People()[marker.title - 1]);
+            self.ShouldShowMarkerContent(true);
+        }
 
-        for (var i = 0; i < self.locations().length; i++) {
-            if (self.locations()[i][5] === 0 || self.locations()[i][6] === 0)
+        renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent);
+
+        self.editPeople = function (peopleId) {
+            alert(peopleId);
+        }
+
+        self.deletePeople = function (peopleId) {
+            if (confirm("Are you sure to delete #" + peopleId + ": " + self.People()[peopleId - 1].FullName() + "?")) { 
+                self.People()[peopleId - 1].IsActive(false);
+                self.ShouldShowMarkerContent(false);
+                renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent);
+            }
+        }
+    }
+
+    var ViewModel = new ViewModel();
+
+    function renderMap(locations, getMarkerState, ShouldShowMarkerContent) {
+        var map = new google.maps.Map(document.getElementById('main_map'), {
+            zoom: 4.5,
+            center: new google.maps.LatLng(-25.656515, 133.245630),
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
+
+        for (var i = 0; i < locations().length; i++) {
+            if (locations()[i][5] === 0 || locations()[i][6] === 0)
                 continue;
             
             marker = new google.maps.Marker({
-                position: new google.maps.LatLng(self.locations()[i][5], self.locations()[i][6]),
-                title: self.locations()[i][0],
+                position: new google.maps.LatLng(locations()[i][5], locations()[i][6]),
+                title: locations()[i][0],
                 map: map
             });
 
             google.maps.event.addListener(marker, 'click', (function(marker, i) {
                 return function() {
-                    infowindow.setContent(self.locations()[i][1]());
+                    infowindow.setContent(locations()[i][1]());
                     infowindow.open(map, marker);
-                    self.getMarkerState(this);
+                    getMarkerState(this);
                 }
             })(marker, i));
 
             google.maps.event.addListener(infowindow, 'closeclick', function () {
-                closeMarkerContents();
+                ShouldShowMarkerContent(false);
             });
         }
-        
-        self.getMarkerState = function (marker) {
-            let SelectedPeople = self.People()[marker.title - 1];
-            displayMarkerContents(SelectedPeople);
-        }
-    }
-
-    function displayMarkerContents(people) {
-        let email = (people.Email().length ? people.Email() : "awaiting update!");
-        let phone = (people.Phone().length ? people.Phone() : "---");
-        let birth = (people.Birth().length ? people.Birth() : "---");
-
-        var content = '' +
-        '<div class="ui card">' +
-            '<div class="content">' +
-                '<div class="header" style="font-size: 16px;">' + people.FullName() + '</div>' +
-                '<div class="meta" style="font-size: 12px;"><i class="fas fa-envelope"></i> ' + email + '</div>' +
-                '<div class="meta" style="font-size: 12px;">' +
-                    '<i class="fas fa-phone"></i> ' + phone + '&emsp;|&emsp;<i class="fas fa-birthday-cake"></i> ' + birth +
-                '</div>' +
-                '<div class="description" style="font-size: 13px;"><i class="fas fa-map-marked-alt"></i> ' + people.NormalizedAddress() + '</div>' +
-                '<div class="row">' +
-                    '<button class="microBtn ui red button right floated">Delete</button>' +
-                    '<button class="microBtn ui orange button right floated">Edit</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
-        
-        $("#view_people").html(content);
-        $("#view_people").show("slow");
-    }
-
-    function closeMarkerContents() {
-        $("#view_people").hide("slow");
     }
     
-    ko.applyBindings(new ViewModel());
+    ko.applyBindings(ViewModel);
 
     $("document").ready(function () {
         $('.ui.dropdown').dropdown();

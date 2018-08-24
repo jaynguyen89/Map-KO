@@ -12,7 +12,8 @@
         "Suburb": "Sunshine West",
         "Postcode": "3020",
         "State": "VIC",
-        "Note": "-37.7931407,144.8043727"
+        "Note": "-37.7931407,144.8043727",
+        "IsActive": true
     },
     {
         "Id": "2",
@@ -27,7 +28,8 @@
         "Suburb": "Minjilang",
         "Postcode": "0822",
         "State": "NT",
-        "Note": "-11.146566,132.5757808"
+        "Note": "-11.146566,132.5757808",
+        "IsActive": true
     },
     {
         "Id": "3",
@@ -42,7 +44,8 @@
         "Suburb": "Hocking",
         "Postcode": "6065",
         "State": "WA",
-        "Note": "-31.7761493,115.8198102"
+        "Note": "-31.7761493,115.8198102",
+        "IsActive": true
     },
     {
         "Id": "4",
@@ -57,7 +60,8 @@
         "Suburb": "Ringwood East",
         "Postcode": "3135",
         "State": "VIC",
-        "Note": "-37.8172329,145.2495387"
+        "Note": "-37.8172329,145.2495387",
+        "IsActive": true
     },
     {
         "Id": "5",
@@ -72,7 +76,8 @@
         "Suburb": "Portalington",
         "Postcode": "3223",
         "State": "VIC",
-        "Note": "-38.114921,144.6694045"
+        "Note": "-38.114921,144.6694045",
+        "IsActive": true
     },
     {
         "Id": "6",
@@ -87,7 +92,8 @@
         "Suburb": "Paddington",
         "Postcode": "4064",
         "State": "QLD",
-        "Note": "-27.4612388,153.0002694"
+        "Note": "-27.4612388,153.0002694",
+        "IsActive": true
     },
     {
         "Id": "7",
@@ -102,7 +108,8 @@
         "Suburb": "Marryatville",
         "Postcode": "5068",
         "State": "SA",
-        "Note": "-34.9278704,138.6457282"
+        "Note": "-34.9278704,138.6457282",
+        "IsActive": true
     },
     {
         "Id": "8",
@@ -117,7 +124,8 @@
         "Suburb": "Parkes",
         "Postcode": "2600",
         "State": "ACT",
-        "Note": "-35.3026719,149.1290795"
+        "Note": "-35.3026719,149.1290795",
+        "IsActive": true
     },
     {
         "Id": "9",
@@ -132,7 +140,8 @@
         "Suburb": "Elsternwick",
         "Postcode": "3185",
         "State": "VIC",
-        "Note": "-37.8881459,145.0061358"
+        "Note": "-37.8881459,145.0061358",
+        "IsActive": true
     },
     {
         "Id": "10",
@@ -147,7 +156,8 @@
         "Suburb": "Melbourne",
         "Postcode": "3000",
         "State": "VIC",
-        "Note": "-37.8083994,144.9661124"
+        "Note": "-37.8083994,144.9661124",
+        "IsActive": true
     },
     {
         "Id": "11",
@@ -162,7 +172,8 @@
         "Suburb": "North Melbourne",
         "Postcode": "3051",
         "State": "VIC",
-        "Note": "-37.8028041,144.9556305"
+        "Note": "-37.8028041,144.9556305",
+        "IsActive": true
     },
     {
         "Id": "12",
@@ -177,7 +188,8 @@
         "Suburb": "Altona North",
         "Postcode": "3025",
         "State": "VIC",
-        "Note": "-37.8362899,144.8537667"
+        "Note": "-37.8362899,144.8537667",
+        "IsActive": true
     },
     {
         "Id": "13",
@@ -192,7 +204,8 @@
         "Suburb": "",
         "Postcode": "",
         "State": "",
-        "Note": ""
+        "Note": "",
+        "IsActive": true
     },
     {
         "Id": "14",
@@ -207,7 +220,8 @@
         "Suburb": "Smithton",
         "Postcode": "7330",
         "State": "TAS",
-        "Note": "-40.844153,145.1149773"
+        "Note": "-40.844153,145.1149773",
+        "IsActive": true
     },
     {
         "Id": "15",
@@ -222,7 +236,8 @@
         "Suburb": "Mosman Park",
         "Postcode": "6012",
         "State": "WA",
-        "Note": "-32.0230455,115.7577622"
+        "Note": "-32.0230455,115.7577622",
+        "IsActive": true
     },
     {
         "Id": "16",
@@ -237,7 +252,8 @@
         "Suburb": "Newcastle West",
         "Postcode": "2302",
         "State": "NSW",
-        "Note": "-32.9294243,151.756936"
+        "Note": "-32.9294243,151.756936",
+        "IsActive": true
     },
     {
         "Id": "17",
@@ -252,7 +268,8 @@
         "Suburb": "North Melbourne",
         "Postcode": "3051",
         "State": "VIC",
-        "Note": "-37.8028041,144.9556305"
+        "Note": "-37.8028041,144.9556305",
+        "IsActive": true
     },
     {
         "Id": "18",
@@ -267,7 +284,8 @@
         "Suburb": "",
         "Postcode": "",
         "State": "",
-        "Note": ""
+        "Note": "",
+        "IsActive": true
     },
     {
         "Id": "19",
@@ -282,7 +300,8 @@
         "Suburb": "Newport",
         "Postcode": "3015",
         "State": "VIC",
-        "Note": "-37.8428318,144.8636278"
+        "Note": "-37.8428318,144.8636278",
+        "IsActive": true
     },
     {
         "Id": "20",
@@ -297,7 +316,8 @@
         "Suburb": "",
         "Postcode": "",
         "State": "QLD",
-        "Note": "-22.3648624,144.7948481"
+        "Note": "-22.3648624,144.7948481",
+        "IsActive": true
     },
     {
         "Id": "21",
@@ -312,7 +332,8 @@
         "Suburb": "Cygnet River",
         "Postcode": "5223",
         "State": "SA",
-        "Note": "-35.6958871,137.5218047"
+        "Note": "-35.6958871,137.5218047",
+        "IsActive": true
     },
     {
         "Id": "22",
@@ -327,7 +348,8 @@
         "Suburb": "Mildura",
         "Postcode": "3500",
         "State": "VIC",
-        "Note": "-34.2003239,142.1296739"
+        "Note": "-34.2003239,142.1296739",
+        "IsActive": true
     },
     {
         "Id": "23",
@@ -342,7 +364,8 @@
         "Suburb": "Ringwood East",
         "Postcode": "3135",
         "State": "VIC",
-        "Note": "-37.8167165,145.2495366"
+        "Note": "-37.8167165,145.2495366",
+        "IsActive": true
     },
     {
         "Id": "24",
@@ -357,7 +380,8 @@
         "Suburb": "Smithton",
         "Postcode": "7330",
         "State": "TAS",
-        "Note": "-40.8447027,145.1180843"
+        "Note": "-40.8447027,145.1180843",
+        "IsActive": true
     },
     {
         "Id": "25",
@@ -372,7 +396,8 @@
         "Suburb": "Melbourne",
         "Postcode": "3000",
         "State": "VIC",
-        "Note": "-37.8083994,144.9661124"
+        "Note": "-37.8083994,144.9661124",
+        "IsActive": true
     },
     {
         "Id": "26",
@@ -387,7 +412,8 @@
         "Suburb": "",
         "Postcode": "",
         "State": "",
-        "Note": ""
+        "Note": "",
+        "IsActive": true
     },
     {
         "Id": "27",
@@ -402,7 +428,8 @@
         "Suburb": "Sunshine West",
         "Postcode": "3020",
         "State": "VIC",
-        "Note": "-37.7929099,144.8040158"
+        "Note": "-37.7929099,144.8040158",
+        "IsActive": true
     },
     {
         "Id": "28",
@@ -417,7 +444,8 @@
         "Suburb": "North Melbourne",
         "Postcode": "3051",
         "State": "VIC",
-        "Note": "-37.8028041,144.9556305"
+        "Note": "-37.8028041,144.9556305",
+        "IsActive": true
     },
     {
         "Id": "29",
@@ -432,7 +460,8 @@
         "Suburb": "Ringwood East",
         "Postcode": "3135",
         "State": "VIC",
-        "Note": "-37.8172269,145.2497437"
+        "Note": "-37.8172269,145.2497437",
+        "IsActive": true
     },
     {
         "Id": "30",
@@ -447,6 +476,7 @@
         "Suburb": "North Fremantle",
         "Postcode": "6159",
         "State": "WA",
-        "Note": "-32.0231077,115.7575422"
+        "Note": "-32.0231077,115.7575422",
+        "IsActive": true
     }
 ]
