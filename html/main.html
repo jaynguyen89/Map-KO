@@ -154,7 +154,7 @@
                             <div class="eight wide column">
                                 <div class="field">
                                     <label for="StreetAddress">Street Address*</label>
-                                    <input type="text" name="StreetAddress" id="StreetAddress" data-bind="value: StreetAddress" placeholder="Ex: 12 Somewhere Street" />
+                                    <input type="text" name="StreetAddress" id="StreetAddress" data-bind="value: StreetAddress, event: { change: $root.relocatePeople }" placeholder="Ex: 12 Somewhere Street" />
                                 </div>
                             </div>
                             <div class="eight wide column">
@@ -166,19 +166,19 @@
                             <div class="eight wide column">
                                 <div class="field">
                                     <label for="Suburb">Suburb*</label>
-                                    <input type="text" name="Suburb" id="Suburb" data-bind="value: Suburb" placeholder="Ex: Sunshine" />
+                                    <input type="text" name="Suburb" id="Suburb" data-bind="value: Suburb, event: { change: $root.relocatePeople }" placeholder="Ex: Sunshine" />
                                 </div>
                             </div>
                             <div class="eight wide column">
                                 <div class="field">
                                     <label for="Postcode">Postcode*</label>
-                                    <input type="text" name="Postcode" id="Postcode" data-bind="value: Postcode" placeholder="Ex: 3020" />
+                                    <input type="text" name="Postcode" id="Postcode" data-bind="value: Postcode, event: { change: $root.relocatePeople }" placeholder="Ex: 3020" />
                                 </div>
                             </div>
                             <div class="eight wide column">
                                 <div class="field">
                                     <label for="State">State*</label>
-                                    <Select type="text" name="State" id="State" data-bind="options: $root.STATES, value: State" />
+                                    <Select type="text" name="State" id="State" data-bind="options: $root.STATES, value: State, event: { change: $root.relocatePeople }" />
                                 </div>
                             </div>
                             <input type="text" name="Lat" id="Lat" data-bind="value: Lat" hidden />
@@ -192,7 +192,7 @@
             <button class="ui green button" data-bind="click: $root.detectLocation"><i class="fas fa-map-marker-alt"></i> Auto Detect</button>
             <div class="right floated">
                 <button class="ui black button" data-bind="click: $root.cancelEdit"><i class="fas fa-undo"></i> Cancel</button>
-                <button class="ui blue button" data-bind="click: $root.editPeopleOnMapConfirmed"><i class="fas fa-check"></i> Done</button>
+                <button class="ui blue button" data-bind="click: $root.editPeopleConfirmed"><i class="fas fa-check"></i> Done</button>
             </div>
         </div>
     </div>
@@ -223,7 +223,7 @@
                         </div>
                         <div class="column">
                             <button class="microBtn ui red button right floated" data-bind="click: $root.deletePeople">Delete</button>
-                            <button class="microBtn ui orange button right floated" data-bind="click: $root.editPeople">Edit</button>
+                            <button class="microBtn ui orange button right floated" data-bind="click: $root.editPeopleOnTable">Edit</button>
                             <button class="microBtn ui blue button right floated">Details</button>
                         </div>
                     </div>
@@ -277,10 +277,8 @@
         self.Id = people.Id;
         self.FamilyName = people.FamilyName ? ko.observable(people.FamilyName) : ko.observable("");
         self.GiveName = people.GiveName ? ko.observable(people.GiveName) : ko.observable("");
-        //self.FullName = ko.observable("");
         self.Email = people.Email ? ko.observable(people.Email) : ko.observable("Email not given.");
         self.Phone = people.Phone ? ko.observable(people.Phone) : ko.observable("---");
-        //self.Birth = ko.observable("");
         self.Birthday = people.Birthday ? ko.observable(people.Birthday) : ko.observable("--");
         self.Birthmonth = people.Birthmonth ? ko.observable(people.Birthmonth) : ko.observable("--");
         self.Birthyear = people.Birthyear ? ko.observable(people.Birthyear) : ko.observable("--");
@@ -291,7 +289,6 @@
         self.Suburb = people.Suburb ? ko.observable(people.Suburb) : ko.observable("");
         self.Postcode = people.Postcode ? ko.observable(people.Postcode) : ko.observable("");
         self.State = people.State ? ko.observable(people.State) : ko.observable("");
-        //self.NormalizedAddress = ko.observable("More information needed.");
         self.Lat = people.Lat ? ko.observable(people.Lat) : ko.observable("");
         self.Long = people.Long ? ko.observable(people.Long) : ko.observable("");
         self.IsActive = ko.observable(people.IsActive);
@@ -403,8 +400,11 @@
             self.ShouldShowEditPeople(false);
         }
         
-        self.editPeople = function (people) {
-            alert("delete");
+        self.editPeopleOnTable = function (people) {
+            self.TempPeople = people;
+            self.SelectedPeople(new PeopleModel(ko.toJS(people)));
+            renderAddressMap(parseFloat(self.TempPeople.Lat()), parseFloat(self.TempPeople.Long()));
+            self.ShouldShowEditPeople(true);
         }
 
         self.editPeopleOnMap = function (peopleId) {
@@ -424,13 +424,16 @@
             self.ShouldShowEditPeople(true);
         }
 
-        self.editPeopleOnMapConfirmed = function () {
-            var edittedPeople = new PeopleModel(ko.toJS(self.SelectedPeople));
+        self.editPeopleConfirmed = function () {
+            let edittedPeople = new PeopleModel(ko.toJS(self.SelectedPeople));
             self.People.replace(self.TempPeople, edittedPeople);
             
             renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             self.ShouldShowMarkerContent(false);
             self.SelectedMarker(null);
+            
+            self.ShouldShowEditPeople(false);
+            alert("New changes have been saved to people #" + edittedPeople.Id + " | " + self.FullNames()[edittedPeople.Id - 1]);
         }
 
         self.detectLocation = function () {
@@ -462,6 +465,16 @@
                 self.ShouldShowMarkerContent(false);
                 renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             }
+        }
+
+        self.relocatePeople = function () {
+            let edittedPeople = new PeopleModel(ko.toJS(self.SelectedPeople));
+            let building = (edittedPeople.BuildingAddress().length === 0 ? "" : edittedPeople.BuildingAddress() + ", "); 
+            let street = (edittedPeople.StreetAddress().length === 0 ? "" : edittedPeople.StreetAddress() + ", "); 
+            let suburb = (edittedPeople.Suburb().length === 0 ? "" : edittedPeople.Suburb() + ", ");
+
+            let normalizedAddress = building + street + suburb + edittedPeople.State() + " " + edittedPeople.Postcode();
+            updateLocation(normalizedAddress);
         }
     }
 
@@ -550,6 +563,24 @@
                 scale: 5
             },
             map: map
+        });
+    }
+
+    function updateLocation(normalizedAddress) {
+        let addressURL = normalizedAddress.split(" ").join("+");
+        let requestURL = "https://maps.googleapis.com/maps/api/geocode/json?address=" + addressURL + "&key=AIzaSyDeataTmSWECGMeGzuh5-RbAadj_rMqbgI";
+        
+        $.getJSON(requestURL, function (data) {
+            if (data["status"] == "OK") {
+                let latitude = data["results"][0]["geometry"]["location"]["lat"];
+                let longitude = data["results"][0]["geometry"]["location"]["lng"];
+                $("#Lat").val(latitude).change();
+                $("#Long").val(longitude).change();
+
+                displayLocation(latitude, longitude);
+            }
+            else
+                errorDiv.innerHTML = "Error ocurred while searching your address on map. Please refresh page.";
         });
     }
 
