@@ -1,3 +1,4 @@
+<script src="//cdn.jsdelivr.net/npm/jquery.scrollto@2.1.2/jquery.scrollTo.min.js"></script>
 <style type="text/css">
     .microBtn {
         padding: 3px !important;
@@ -59,6 +60,7 @@
                 <div class="item">By Email</div>
             </div>
         </div>
+        <div id="scroll_anchor"></div>
     </div>
     
     <div id="outerDiv">
@@ -82,6 +84,9 @@
                     </div>
                 </div>
             </div>
+            <div class="row" data-bind="visible: $root.ShouldShowCloseDetails">
+                <button class="mini ui black button" data-bind="click: $root.CloseDetails">Close Details</button>
+            </div>
         </div>
     </div>
 
@@ -97,7 +102,7 @@
                 </div>
                 <div class="ten wide column">
                     <form class="ui form" data-bind="with: SelectedPeople">
-                        <p id="editPeopleError">This is an error.</p>
+                        <p id="editPeopleError" style="color: orangered; display: none;">This is an error.</p>
                         <div class="ui stackable grid">
                             <div class="eight wide column">
                                 <div class="field">
@@ -220,11 +225,12 @@
                     <div class="ui stackable two column grid">
                         <div class="column">
                             <span data-bind="text: $root.FullNames()[Id - 1]"></span>
+                            <p style="color: purple; font-size: 11px;" data-bind="visible: !Long()">(Not in map)</p>
                         </div>
                         <div class="column">
                             <button class="microBtn ui red button right floated" data-bind="click: $root.deletePeople">Delete</button>
                             <button class="microBtn ui orange button right floated" data-bind="click: $root.editPeopleOnTable">Edit</button>
-                            <button class="microBtn ui blue button right floated">Details</button>
+                            <button class="microBtn ui blue button right floated" id="people_details" data-bind="click: $root.viewDetails">Details</button>
                         </div>
                     </div>
                 </th>
@@ -237,19 +243,80 @@
             <tr>
                 <th></th>
                 <th colspan="5">
-                    <div class="ui right floated small red icon button">
+                    <div class="ui right floated small red icon button" data-bind="click: $root.revertDefault">
                         <i class="fas fa-reply"></i> Revert to Default
                     </div>
-                    <div class="ui right floated small primary icon button">
+                    <div class="ui right floated small primary icon button" data-bind="click: $root.AddPeople">
                         <i class="fas fa-user-plus"></i> Add People
                     </div>
-                    <div class="ui left floated small green icon button">
+                    <div class="ui left floated small green icon button" data-bind="click: $root.CalculateDistance">
                         <i class="fas fa-route"></i> Distance
                     </div>
                 </th>
             </tr>
         </tfoot>
     </table>
+</div>
+
+<div class="ui small modal" id="addPeopleModal">
+    <div class="header">Add People</div>
+    <div class="content">
+        <form class="ui form" data-bind="with: $root.NewPeople">
+            <div class="ui stackable grid">
+                <div class="eight wide column">
+                    <div class="field">
+                        <label for="FamilyName">Family Name*</label>
+                        <input type="text" name="FamilyName" id="FamilyName" data-bind="value: FamilyName" placeholder="Ex. Potter" />
+                    </div>
+                </div>
+                <div class="eight wide column">
+                    <div class="field">
+                        <label for="GiveName">Give Name*</label>
+                        <input type="text" name="GiveName" id="GiveName" data-bind="value: GiveName" placeholder="Ex. Harry" />
+                    </div>
+                </div>
+                <div class="eight wide column">
+                    <div class="field">
+                        <label for="Email">Email</label>
+                        <input type="email" name="Email" id="Email" data-bind="value: Email" placeholder="Ex. some.thing_else123@domain.com.ex" />
+                    </div>
+                </div>
+                <div class="eight wide column">
+                    <div class="field">
+                        <label for="Phone">Phone</label>
+                        <input type="text" name="Phone" id="Phone" data-bind="value: Phone" placeholder="Ex: 0412 345 678" />
+                    </div>
+                </div>
+                <div class="sixteen wide column">
+                    <div class="sixteen wide column"><span style="color: black;">Birthday</span></div>
+                    <div class="ui stackable grid">
+                        <div class="five wide column">
+                            <label for="Birthday">Day</label>
+                            <input type="number" min="1" max="31" name="Birthday" id="Birthday" data-bind="value: Birthday" />
+                        </div>
+                        <div class="five wide column">
+                            <label for="Birthmonth">Month</label>
+                            <input type="number" min="1" max="12" name="Birthmonth" id="Birthmonth" data-bind="value: Birthmonth" />
+                        </div>
+                        <div class="five wide column">
+                            <label for="Birthyear">Year</label>
+                            <input type="number" min="0" name="Birthyear" id="Birthyear" data-bind="value: Birthyear" />
+                        </div>
+                        <div class="one wide column">
+                            <label for="BC">BC</label>
+                            <input type="checkbox" name="BC" value="1" id="BC" data-bind="checked: BirthBC" />
+                        </div>
+                    </div>
+                </div>
+                <div class="sixteen wide column">
+                    (*) Please use feature "Edit People" to update location.
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <button class="ui blue button" data-bind="click: $root.AddPeopleConfirmed"><i class="fas fa-check"></i> Done</button>
+    </div>
 </div>
 
 <script type="text/javascript">
@@ -305,6 +372,7 @@
         self.ShouldShowEditPeople = ko.observable(false);
         self.SelectedPeople = ko.observable();
         self.TempPeople = null;
+        self.ShouldShowCloseDetails = ko.observable(false);
         
         self.switchView = function () {
             if (self.SelectedView() === "Map View") {
@@ -327,7 +395,7 @@
                     self.ShouldShowMarkerContent(true);
             }
             
-            self.ShouldShowEditPeople(true);
+            self.ShouldShowEditPeople(false);
             self.SelectedPeople(null);
         }
 
@@ -405,23 +473,15 @@
             self.SelectedPeople(new PeopleModel(ko.toJS(people)));
             renderAddressMap(parseFloat(self.TempPeople.Lat()), parseFloat(self.TempPeople.Long()));
             self.ShouldShowEditPeople(true);
+            $.scrollTo("#editPeople", 1000);
         }
 
         self.editPeopleOnMap = function (peopleId) {
-            if (self.SelectedPeople() != undefined) {
-                if (confirm("Discard all changes with current editted people?")) {
-                    self.TempPeople = self.People()[peopleId - 1];
-                    self.SelectedPeople(new PeopleModel(ko.toJS(self.TempPeople)));
-                    renderAddressMap(parseFloat(self.TempPeople.Lat()), parseFloat(self.TempPeople.Long()));
-                }
-            }
-            else {
-                self.TempPeople = self.People()[peopleId - 1];
-                self.SelectedPeople(new PeopleModel(ko.toJS(self.TempPeople)));
-                renderAddressMap(parseFloat(self.TempPeople.Lat()), parseFloat(self.TempPeople.Long()));
-            }
-
+            self.TempPeople = self.People()[peopleId - 1];
+            self.SelectedPeople(new PeopleModel(ko.toJS(self.TempPeople)));
+            renderAddressMap(parseFloat(self.TempPeople.Lat()), parseFloat(self.TempPeople.Long()));
             self.ShouldShowEditPeople(true);
+            $.scrollTo("#editPeople", 1000);
         }
 
         self.editPeopleConfirmed = function () {
@@ -450,21 +510,37 @@
         }
         
         self.deletePeople = function (people) {
-            if (confirm("Are you sure to delete #" + peopleId + ": " + self.People()[peopleId - 1].FullName() + "?")) {
+            if (confirm("Are you sure to delete #" + people.Id + ": " + self.FullNames()[people.Id - 1] + "?")) {
                 var temp = new PeopleModel(ko.toJS(people));
                 people.IsActive(false);
                 self.People.replace(temp, people);
                 self.ShouldShowMarkerContent(false);
                 renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent);
             }
+
+            if (self.TempPeople !== null && self.TempPeople.Id === people.Id) {
+                self.ShouldShowEditPeople(false);
+                self.TempPeople = null;
+            }
+
+            if (self.TempPeople !== null && self.TempPeople.Id !== people.Id)
+                self.ShouldShowMarkerContent(true);
         }
 
         self.deletePeopleOnMap = function (peopleId) {
-            if (confirm("Are you sure to delete #" + peopleId + ": " + self.People()[peopleId - 1].FullName() + "?")) { 
+            if (confirm("Are you sure to delete #" + peopleId + ": " + self.FullNames()[peopleId - 1] + "?")) { 
                 self.People()[peopleId - 1].IsActive(false);
                 self.ShouldShowMarkerContent(false);
                 renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             }
+
+            if (self.TempPeople !== null && self.TempPeople.Id === people.Id) {
+                self.ShouldShowEditPeople(false);
+                self.TempPeople = null;
+            }
+
+            if (self.TempPeople !== null && self.TempPeople.Id !== people.Id)
+                self.ShouldShowMarkerContent(true);
         }
 
         self.relocatePeople = function () {
@@ -475,6 +551,94 @@
 
             let normalizedAddress = building + street + suburb + edittedPeople.State() + " " + edittedPeople.Postcode();
             updateLocation(normalizedAddress);
+        }
+
+        self.viewDetails = function (people) {
+            if (people.Lat() && people.Long()) {
+                var infoWindow = new google.maps.InfoWindow();
+                var map = new google.maps.Map(document.getElementById('main_map'), {
+                    zoom: 16,
+                    center: new google.maps.LatLng(people.Lat(), people.Long()),
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                });
+
+                var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(people.Lat(), people.Long()),
+                    label: { text: self.FullNames()[people.Id - 1], fontWeight: "bold", color: "#FF1493" },
+                    icon: {
+                        labelOrigin: new google.maps.Point(1, 5),
+                        path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+                        scale: 5
+                    },
+                    map: map
+                });
+            }
+            else {
+                renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+                alert("#" + people.Id + " | " + self.FullNames()[people.Id - 1] + ": Home address not available. Map not rendered.");
+            }
+
+            self.SelectedMarker(new PeopleModel(ko.toJS(people)));
+            self.ShouldShowMarkerContent(true);
+            self.ShouldShowCloseDetails(true);
+            $.scrollTo("#scroll_anchor", 1000);
+        }
+
+        self.CloseDetails = function () {
+            self.SelectedMarker(null);
+            self.ShouldShowMarkerContent(false);
+            self.ShouldShowCloseDetails(false);
+
+            renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+        }
+        
+        self.NewPeople = ko.observable();
+        self.AddPeople = function () {
+            var people = new PeopleModel({
+                                            Id: "",
+                                            FamilyName: "",
+                                            GiveName: "",
+                                            Email: "",
+                                            Phone: "",
+                                            Birthday: "",
+                                            Birthmonth: "",
+                                            Birthyear: "",
+                                            BirthBC: false,
+                                            BuildingAddress: "",
+                                            StreetAddress: "",
+                                            AlternateAddress: "",
+                                            Suburb: "",
+                                            Postcode: "",
+                                            State: "",
+                                            Lat: "",
+                                            Long: "",
+                                            IsActive: true
+                                        });
+            people.Id = self.People().length + 1;
+            self.NewPeople(ko.toJS(people));
+            $("#addPeopleModal").modal("show");
+        }
+
+        self.AddPeopleConfirmed = function () {
+            self.People.push(new PeopleModel(ko.toJS(self.NewPeople)));
+            alert("A new people has been added. Please update its location.");
+            $('#addPeopleModal').modal("toggle");
+        }
+
+        self.CalculateDistance = function () {
+
+        }
+
+        self.revertDefault = function () {
+            if (confirm("Everything will be set back to original state. Continue?")) {
+                self.People([]);
+                for (var k in data) {
+                    var people = new PeopleModel(ko.toJS(data[k]));
+                    self.People.push(people);
+                }
+
+                renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+            }
         }
     }
 
@@ -515,17 +679,25 @@
     var addressMap;
     var addressMarker;
     function renderAddressMap(latitude, longitude) {
-        addressMap = new google.maps.Map(document.getElementById('address_map'), {
-            zoom: 16,
-            center: new google.maps.LatLng(latitude, longitude),
-            mapTypeId: google.maps.MapTypeId.ROADMAP
-        });
+        if (latitude && longitude) {
+            addressMap = new google.maps.Map(document.getElementById('address_map'), {
+                zoom: 16,
+                center: new google.maps.LatLng(latitude, longitude),
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            });
 
-        addressMarker = new google.maps.Marker({
-            position: { lat: latitude, lng: longitude }
-        });
+            addressMarker = new google.maps.Marker({
+                position: { lat: latitude, lng: longitude }
+            });
 
-        addressMarker.setMap(addressMap);
+            addressMarker.setMap(addressMap);
+        }
+        else
+            addressMap = new google.maps.Map(document.getElementById('address_map'), {
+                zoom: 5,
+                center: new google.maps.LatLng(-25.656515, 133.245630),
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            });
     }
 
     function processPosition(position) {
