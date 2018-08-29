@@ -30,12 +30,33 @@
         width: 260px;
     }
 
+    #view_pair {
+        position: absolute;
+        top: 60px;
+        left: 30px;
+        width: 260px;
+    }
+
     #editPeople {
         width: 100%;
         margin-bottom: 20px;
     }
 
+    #print_distance {
+        background-color: #cccccc;
+        font-size: 11px;
+        line-height: 15px;
+        padding: 7px;
+        border: gray;
+        border-radius: 10px;
+    }
+
     .clearfix { clear: both; }
+
+    [data-tooltip]:after {
+        font-size: 12px !important;
+        padding: 5px !important;
+    }
 </style>
 
 <div class="row mainContent">
@@ -44,7 +65,7 @@
             <div class="column">
                 <span><b>Select a view mode:</b>&nbsp;</span>
                 <select name="View" class="ui dropdown"
-                        data-bind="options: VIEWS, value: SelectedView, valueUpdate: 'afterkeydown', event: { change: $root.switchView }">
+                        data-bind="options: VIEWS, value: SelectedView, valueUpdate: 'afterkeydown', event: { change: $root.SwitchView }">
                 </select>
             </div>
         </div>
@@ -67,7 +88,7 @@
         <div id="main_map" class="ui embed myMap"></div>
         <div class="clearfix"></div>
         <div id="view_people" data-bind="visible: $root.ShouldShowMarkerContent">
-            <div class="ui card" data-bind="with: $root.SelectedMarker">
+            <div class="ui blue card" data-bind="with: $root.SelectedMarker">
                 <div class="content">
                     <div class="header" style="font-size: 16px;" data-bind="text: '#' + Id + '&nbsp;|&nbsp;' + $root.FullNames()[Id - 1]"></div>
                     <div class="meta" style="font-size: 12px;" data-bind="text: Email"></div>
@@ -78,15 +99,20 @@
                         <span style="font-size: 13px;" data-bind="text: $root.NormalizedAddresses()[Id - 1]"></span>
                     </div>
                     <div class="row">
-                        <button class="microBtn ui blue button">Select</button>
-                        <button class="microBtn ui red button right floated" data-bind="click: $root.deletePeopleOnMap.bind(this, Id)">Delete</button>
-                        <button class="microBtn ui orange button right floated" data-bind="click: $root.editPeopleOnMap.bind(this, Id)">Edit</button>
+                        <input class="ui checkbox" type="checkbox" data-bind="checked: IsChosen" data-tooltip="Select this People" data-position="right center">
+                        <button class="microBtn ui red button right floated" data-bind="click: $root.DeletePeopleOnMap.bind(this, Id)">Delete</button>
+                        <button class="microBtn ui orange button right floated" data-bind="click: $root.EditPeopleOnMap.bind(this, Id)">Edit</button>
                     </div>
                 </div>
             </div>
             <div class="row" data-bind="visible: $root.ShouldShowCloseDetails">
                 <button class="mini ui black button" data-bind="click: $root.CloseDetails">Close Details</button>
             </div>
+        </div>
+        <div id="view_pair" data-bind="visible: $root.ShouldShowDistance">
+            <div class="ui blue card" id="pair_details"></div>
+            <p id="print_distance"></p>
+            <button class="mini ui black button" data-bind="click: $root.CloseDistance">Close Distance</button>
         </div>
     </div>
 
@@ -171,19 +197,19 @@
                             <div class="eight wide column">
                                 <div class="field">
                                     <label for="Suburb">Suburb*</label>
-                                    <input type="text" name="Suburb" id="Suburb" data-bind="value: Suburb, event: { change: $root.relocatePeople }" placeholder="Ex: Sunshine" />
+                                    <input type="text" name="Suburb" id="Suburb" data-bind="value: Suburb, event: { change: $root.RelocatePeople }" placeholder="Ex: Sunshine" />
                                 </div>
                             </div>
                             <div class="eight wide column">
                                 <div class="field">
                                     <label for="Postcode">Postcode*</label>
-                                    <input type="text" name="Postcode" id="Postcode" data-bind="value: Postcode, event: { change: $root.relocatePeople }" placeholder="Ex: 3020" />
+                                    <input type="text" name="Postcode" id="Postcode" data-bind="value: Postcode, event: { change: $root.RelocatePeople }" placeholder="Ex: 3020" />
                                 </div>
                             </div>
                             <div class="eight wide column">
                                 <div class="field">
                                     <label for="State">State*</label>
-                                    <Select type="text" name="State" id="State" data-bind="options: $root.STATES, value: State, event: { change: $root.relocatePeople }" />
+                                    <Select type="text" name="State" id="State" data-bind="options: $root.STATES, value: State, event: { change: $root.RelocatePeople }" />
                                 </div>
                             </div>
                             <input type="text" name="Lat" id="Lat" data-bind="value: Lat" hidden />
@@ -194,10 +220,10 @@
             </div>
         </div>
         <div class="extra content">
-            <button class="ui green button" data-bind="click: $root.detectLocation"><i class="fas fa-map-marker-alt"></i> Auto Detect</button>
+            <button class="ui green button" data-bind="click: $root.DetectLocation"><i class="fas fa-map-marker-alt"></i> Auto Detect</button>
             <div class="right floated">
-                <button class="ui black button" data-bind="click: $root.cancelEdit"><i class="fas fa-undo"></i> Cancel</button>
-                <button class="ui blue button" data-bind="click: $root.editPeopleConfirmed"><i class="fas fa-check"></i> Done</button>
+                <button class="ui black button" data-bind="click: $root.CancelEdit"><i class="fas fa-undo"></i> Cancel</button>
+                <button class="ui blue button" data-bind="click: $root.EditPeopleConfirmed"><i class="fas fa-check"></i> Done</button>
             </div>
         </div>
     </div>
@@ -205,19 +231,19 @@
     <table id="main_table" class="myTable ui compact celled definition blue table" data-bind="with: $root.People">
         <thead class="full-width">
             <tr>
-                <th class="center aligned"><i class="fas fa-hand-point-up"></i></th>
-                <th class="center aligned"><i class="fas fa-hashtag"></i></th>
-                <th class="center aligned"><i class="fas fa-signature"></i> Name</th>
-                <th class="center aligned"><i class="fas fa-envelope"></i> Email</th>
-                <th class="center aligned"><i class="fas fa-phone"></i> Phone</th>
-                <th class="center aligned"><i class="fas fa-birthday-cake"></i> Birthday</th>
+                <th class="center aligned"><i class="fas fa-hand-point-up"></i><br />Select</th>
+                <th class="center aligned"><i class="fas fa-hashtag"><br />Id</i></th>
+                <th class="center aligned"><i class="fas fa-signature"></i><br />Name</th>
+                <th class="center aligned"><i class="fas fa-envelope"></i><br />Email</th>
+                <th class="center aligned"><i class="fas fa-phone"></i><br />Phone</th>
+                <th class="center aligned"><i class="fas fa-birthday-cake"></i><br />Birthday</th>
             </tr>
         </thead>
         <tbody data-bind="foreach: $root.People">
             <tr data-bind="visible: IsActive">
                 <td class="collapsing">
                     <div class="ui fitted slider checkbox">
-                        <input id="" type="checkbox"><label></label>
+                        <input type="checkbox" data-bind="checked: IsChosen"><label></label>
                     </div>
                 </td>
                 <th data-bind="text: Id"></th>
@@ -228,9 +254,9 @@
                             <p style="color: purple; font-size: 11px;" data-bind="visible: !Long()">(Not in map)</p>
                         </div>
                         <div class="column">
-                            <button class="microBtn ui red button right floated" data-bind="click: $root.deletePeople">Delete</button>
-                            <button class="microBtn ui orange button right floated" data-bind="click: $root.editPeopleOnTable">Edit</button>
-                            <button class="microBtn ui blue button right floated" id="people_details" data-bind="click: $root.viewDetails">Details</button>
+                            <button class="microBtn ui red button right floated" data-bind="click: $root.DeletePeople">Delete</button>
+                            <button class="microBtn ui orange button right floated" data-bind="click: $root.EditPeopleOnTable">Edit</button>
+                            <button class="microBtn ui blue button right floated" id="people_details" data-bind="click: $root.ViewDetails">Details</button>
                         </div>
                     </div>
                 </th>
@@ -243,14 +269,19 @@
             <tr>
                 <th></th>
                 <th colspan="5">
-                    <div class="ui right floated small red icon button" data-bind="click: $root.revertDefault">
+                    <div class="ui right floated small red icon button" data-bind="click: $root.RevertDefault">
                         <i class="fas fa-reply"></i> Revert to Default
                     </div>
                     <div class="ui right floated small primary icon button" data-bind="click: $root.AddPeople">
                         <i class="fas fa-user-plus"></i> Add People
                     </div>
-                    <div class="ui left floated small green icon button" data-bind="click: $root.CalculateDistance">
+                    <div class="ui left floated small green icon button" data-bind="click: $root.CalculateDistance"
+                         data-tooltip="Select exactly 2 People to calculate distance." data-position="top left">
                         <i class="fas fa-route"></i> Distance
+                    </div>
+                    <div class="ui left floated small violet icon button" data-bind="click: $root.AutoDistance"
+                         data-tooltip="Randomly select 2 People then calculate distance" data-position="top left">
+                        <i class="fas fa-random"></i> Auto Distance
                     </div>
                 </th>
             </tr>
@@ -373,8 +404,9 @@
         self.SelectedPeople = ko.observable();
         self.TempPeople = null;
         self.ShouldShowCloseDetails = ko.observable(false);
+        self.ShouldShowDistance = ko.observable(false);
         
-        self.switchView = function () {
+        self.SwitchView = function () {
             if (self.SelectedView() === "Map View") {
                 $("#main_map").show("slow");
                 $("#main_table").hide("slow");
@@ -456,19 +488,19 @@
             return locs;
         }, self);
         
-        self.getMarkerState = function (marker) {
+        self.GetMarkerState = function (marker) {
             self.SelectedMarker(self.People()[marker.title - 1]);
             self.ShouldShowMarkerContent(true);
         }
 
-        renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+        renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
 
-        self.cancelEdit = function () {
+        self.CancelEdit = function () {
             self.SelectedPeople(null);
             self.ShouldShowEditPeople(false);
         }
         
-        self.editPeopleOnTable = function (people) {
+        self.EditPeopleOnTable = function (people) {
             self.TempPeople = people;
             self.SelectedPeople(new PeopleModel(ko.toJS(people)));
             renderAddressMap(parseFloat(self.TempPeople.Lat()), parseFloat(self.TempPeople.Long()));
@@ -476,7 +508,7 @@
             $.scrollTo("#editPeople", 1000);
         }
 
-        self.editPeopleOnMap = function (peopleId) {
+        self.EditPeopleOnMap = function (peopleId) {
             self.TempPeople = self.People()[peopleId - 1];
             self.SelectedPeople(new PeopleModel(ko.toJS(self.TempPeople)));
             renderAddressMap(parseFloat(self.TempPeople.Lat()), parseFloat(self.TempPeople.Long()));
@@ -484,11 +516,11 @@
             $.scrollTo("#editPeople", 1000);
         }
 
-        self.editPeopleConfirmed = function () {
+        self.EditPeopleConfirmed = function () {
             let edittedPeople = new PeopleModel(ko.toJS(self.SelectedPeople));
             self.People.replace(self.TempPeople, edittedPeople);
             
-            renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+            renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             self.ShouldShowMarkerContent(false);
             self.SelectedMarker(null);
             
@@ -496,7 +528,7 @@
             alert("New changes have been saved to people #" + edittedPeople.Id + " | " + self.FullNames()[edittedPeople.Id - 1]);
         }
 
-        self.detectLocation = function () {
+        self.DetectLocation = function () {
             if (confirm("Map-KO needs to access your device\'s location service.")) {
                 if (navigator.geolocation) {
                     errorDiv.style.display = "none";
@@ -509,13 +541,13 @@
                 displayError("Oops! You didn\'t grant permission for location access.");
         }
         
-        self.deletePeople = function (people) {
+        self.DeletePeople = function (people) {
             if (confirm("Are you sure to delete #" + people.Id + ": " + self.FullNames()[people.Id - 1] + "?")) {
                 var temp = new PeopleModel(ko.toJS(people));
                 people.IsActive(false);
                 self.People.replace(temp, people);
                 self.ShouldShowMarkerContent(false);
-                renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent);
+                renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent);
             }
 
             if (self.TempPeople !== null && self.TempPeople.Id === people.Id) {
@@ -527,11 +559,11 @@
                 self.ShouldShowMarkerContent(true);
         }
 
-        self.deletePeopleOnMap = function (peopleId) {
+        self.DeletePeopleOnMap = function (peopleId) {
             if (confirm("Are you sure to delete #" + peopleId + ": " + self.FullNames()[peopleId - 1] + "?")) { 
                 self.People()[peopleId - 1].IsActive(false);
                 self.ShouldShowMarkerContent(false);
-                renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+                renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             }
 
             if (self.TempPeople !== null && self.TempPeople.Id === people.Id) {
@@ -543,7 +575,7 @@
                 self.ShouldShowMarkerContent(true);
         }
 
-        self.relocatePeople = function () {
+        self.RelocatePeople = function () {
             let edittedPeople = new PeopleModel(ko.toJS(self.SelectedPeople));
             let building = (edittedPeople.BuildingAddress().length === 0 ? "" : edittedPeople.BuildingAddress() + ", "); 
             let street = (edittedPeople.StreetAddress().length === 0 ? "" : edittedPeople.StreetAddress() + ", "); 
@@ -553,7 +585,7 @@
             updateLocation(normalizedAddress);
         }
 
-        self.viewDetails = function (people) {
+        self.ViewDetails = function (people) {
             if (people.Lat() && people.Long()) {
                 var infoWindow = new google.maps.InfoWindow();
                 var map = new google.maps.Map(document.getElementById('main_map'), {
@@ -574,7 +606,7 @@
                 });
             }
             else {
-                renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+                renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
                 alert("#" + people.Id + " | " + self.FullNames()[people.Id - 1] + ": Home address not available. Map not rendered.");
             }
 
@@ -589,7 +621,7 @@
             self.ShouldShowMarkerContent(false);
             self.ShouldShowCloseDetails(false);
 
-            renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+            renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
         }
         
         self.NewPeople = ko.observable();
@@ -624,12 +656,69 @@
             alert("A new people has been added. Please update its location.");
             $('#addPeopleModal').modal("toggle");
         }
+        
+        self.DistancePair = ko.observableArray();
+        self.AutoDistance = function () {
+            for (var i = 0; i < self.People().length; i++)
+                if (self.People()[i].IsChosen())
+                    self.People()[i].IsChosen(false);
 
-        self.CalculateDistance = function () {
+            let selectedPair = twoPeopleRandom(self.People().slice());
+            self.People()[selectedPair[0].Id - 1].IsChosen(true);
+            self.People()[selectedPair[1].Id - 1].IsChosen(true);
+            self.DistancePair(selectedPair);
 
+            processDistanceService(selectedPair);
+
+            self.ShouldShowCloseDetails(false);
+            self.ShouldShowEditPeople(false);
+            self.ShouldShowMarkerContent(false);
+            self.ShouldShowDistance(true);
+            displayPairOnMap(selectedPair);
+            $.scrollTo("#scroll_anchor", 1000);
         }
 
-        self.revertDefault = function () {
+        self.CalculateDistance = function () {
+            var countSelected = checkSelectedPeople(self.People().slice());
+            if (countSelected !== 2)
+                showCountWarning(countSelected);
+            else {
+                let selectedPair = [];
+                for (var i = 0; i < self.People().length; i++) {
+                    if (self.People()[i].IsChosen())
+                        selectedPair.push(self.People()[i]);
+
+                    if (selectedPair.length === 2)
+                        break;
+                }
+
+                self.DistancePair(selectedPair);
+
+                if (!checkAddressPeople(selectedPair))
+                    alert("At least 1 selected People is unallocated. Please update its address.");
+                else {
+                    processDistanceService(selectedPair);
+
+                    self.ShouldShowCloseDetails(false);
+                    self.ShouldShowEditPeople(false);
+                    self.ShouldShowMarkerContent(false);
+                    self.ShouldShowDistance(true);
+                    displayPairOnMap(selectedPair);
+                    $.scrollTo("#scroll_anchor", 1000);
+                }
+            }
+        }
+
+        self.CloseDistance = function () {
+            for (var i = 0; i < self.People().length; i++)
+                if (self.People()[i].IsChosen())
+                    self.People()[i].IsChosen(false);
+            
+            self.ShouldShowDistance(false);
+            renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+        }
+
+        self.RevertDefault = function () {
             if (confirm("Everything will be set back to original state. Continue?")) {
                 self.People([]);
                 for (var k in data) {
@@ -637,14 +726,14 @@
                     self.People.push(people);
                 }
 
-                renderMap(self.locations, self.getMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+                renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             }
         }
     }
 
     var ViewModel = new ViewModel();
 
-    function renderMap(locations, getMarkerState, ShouldShowMarkerContent, SelectedMarker) {
+    function renderMap(locations, GetMarkerState, ShouldShowMarkerContent, SelectedMarker) {
         var map = new google.maps.Map(document.getElementById('main_map'), {
             zoom: 4.5,
             center: new google.maps.LatLng(-25.656515, 133.245630),
@@ -665,7 +754,7 @@
                 return function() {
                     infowindow.setContent(locations()[i][1]);
                     infowindow.open(map, marker);
-                    getMarkerState(this);
+                    GetMarkerState(this);
                 }
             })(marker, i));
 
@@ -763,6 +852,124 @@
 
     function hideError() { 
         errorDiv.style.display = "none";
+    }
+
+    function checkSelectedPeople(people) {
+        var countSelected = 0;
+        for (var i = 0; i < people.length; i++) {
+            if (people[i].IsChosen())
+                countSelected++;
+        }
+
+        return countSelected;
+    }
+
+    function showCountWarning(count) {
+        if (count == 0)
+            alert("No people has been selected. Please select exactly 2 people.");
+        else if (count == 1)
+            alert("Only 1 people has been selected. Please select exactly 1 more.");
+        else
+            alert("More than 2 people have been selected. Please only select exactly 2.");
+    }
+
+    function checkAddressPeople(people) {
+        if (people[0].Lat().length !== 0 && people[1].Lat().length !== 0 &&
+            people[0].Long().length !== 0 && people[1].Long().length !== 0)
+            return true;
+        
+        return false;
+    }
+
+    function twoPeopleRandom(people) {
+        for (var i = 0; i < people.length; i++)
+            if (people[i].Lat().length === 0 || people[i].Long().length === 0)
+                people.splice(i, 1);
+
+        var currentIndex = people.length, temp, randomIndex;
+
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex -= 1;
+
+            temp = people[currentIndex];
+            people[currentIndex] = people[randomIndex];
+            people[randomIndex] = temp;
+        }
+
+        return [people[0], people[1]];
+    }
+
+    function processDistanceService(pair) {
+        var address1, address2;
+        var requestURL1 = "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + pair[0].Lat() + "," + pair[0].Long() + "&key=AIzaSyDeataTmSWECGMeGzuh5-RbAadj_rMqbgI";
+        var requestURL2 = "https://maps.googleapis.com/maps/api/geocode/json?latlng=" + pair[1].Lat() + "," + pair[1].Long() + "&key=AIzaSyDeataTmSWECGMeGzuh5-RbAadj_rMqbgI";
+
+        $.getJSON(requestURL1, function (data) {
+            if (data["status"] == "OK") {
+                address1 = data["results"][0]["formatted_address"];
+
+                $.getJSON(requestURL2, function (data) {
+                    if (data["status"] == "OK") {
+                        address2 = data["results"][0]["formatted_address"];
+
+                        var service = new google.maps.DistanceMatrixService();
+                        service.getDistanceMatrix(
+                            {
+                                origins: [address1],
+                                destinations: [address2],
+                                travelMode: google.maps.TravelMode.DRIVING,
+                                unitSystem: google.maps.UnitSystem.METRIC,
+                                avoidHighways: false,
+                                avoidTolls: true
+                            }, printDistance);
+                    }
+                    else
+                        alert("Oops... Directions not processed successfully. Please try again.");
+                });
+            }
+            else
+                alert("Oops... Errors while processing distance. Please try again.");
+        });
+    }
+
+    var distance, time;
+    function printDistance(response, status) {
+        if (status != google.maps.DistanceMatrixStatus.OK)
+            alert("Oops... Errors while processing distance. Please try again.");
+        else {
+            if (response.rows[0].elements[0].status === "ZERO_RESULTS")
+                alert("Google detects no possible directions between these 2 People. No estimate distance can be advised. Please select another pair.");
+            else {
+                distance = response.rows[0].elements[0].distance.text;
+                time = response.rows[0].elements[0].duration.text;
+                
+                var content = 'Estimated distance: ' + distance + ', travelling in ' + time + ' by car. Tollway avoided.';
+                $("#print_distance").html(content);
+            }
+        }
+    }
+
+    function displayPairOnMap(pair) {
+        let building1 = (pair[0].BuildingAddress().length === 0 ? "" : pair[0].BuildingAddress() + ", "); 
+        let street1 = (pair[0].StreetAddress().length === 0 ? "" : pair[0].StreetAddress() + ", "); 
+        let suburb1 = (pair[0].Suburb().length === 0 ? "" : pair[0].Suburb() + ", ");
+
+        let building2 = (pair[1].BuildingAddress().length === 0 ? "" : pair[1].BuildingAddress() + ", "); 
+        let street2 = (pair[1].StreetAddress().length === 0 ? "" : pair[1].StreetAddress() + ", "); 
+        let suburb2 = (pair[1].Suburb().length === 0 ? "" : pair[1].Suburb() + ", ");
+
+        var content = '<div class="content"><div class="header" style="font-size: 14px; line-height: 5px;">Distance between:</div></div>' +
+            '<div class="extra content" style="color: black; font-size: 12px !important;">' +
+                '<p>#' + pair[0].Id + ' | ' + pair[0].GiveName() + ' ' + pair[0].FamilyName() + '</p>' +
+                '<p>' + building1 + street1 + suburb1 + pair[0].State() + ' ' + pair[0].Postcode() + '</p>' +
+            '</div>' +
+            '<div class="extra content" style="color: black; font-size: 12px !important;">' +
+                '<p>#' + pair[1].Id + ' | ' + pair[1].GiveName() + ' ' + pair[1].FamilyName() + '</p>' +
+                '<p>' + building2 + street2 + suburb2 + pair[1].State() + ' ' + pair[1].Postcode() + '</p>' +
+            '</div>';
+
+        $("#pair_details").html(content);
     }
 
     function navigatorError(error) { 
