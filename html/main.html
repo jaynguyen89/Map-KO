@@ -675,6 +675,7 @@
             self.ShouldShowMarkerContent(false);
             self.ShouldShowDistance(true);
             displayPairOnMap(selectedPair);
+            renderDirectionOnMap(selectedPair);
             $.scrollTo("#scroll_anchor", 1000);
         }
 
@@ -704,6 +705,7 @@
                     self.ShouldShowMarkerContent(false);
                     self.ShouldShowDistance(true);
                     displayPairOnMap(selectedPair);
+                    renderDirectionOnMap(selectedPair);
                     $.scrollTo("#scroll_anchor", 1000);
                 }
             }
@@ -970,6 +972,60 @@
             '</div>';
 
         $("#pair_details").html(content);
+    }
+
+    function renderDirectionOnMap(pair) {
+        var stepMarkerArray = [];
+
+        let cenlat = (parseFloat(pair[0].Lat()) + parseFloat(pair[1].Lat()))/2.0;
+        let cenlong = (parseFloat(pair[0].Long()) + parseFloat(pair[1].Long()))/2.0;
+
+        var map = new google.maps.Map(document.getElementById('main_map'), {
+          zoom: 5,
+          center: { lat: cenlat, lng: cenlong }
+        });
+        
+        var stepDisplay = new google.maps.InfoWindow;
+        var directionsService = new google.maps.DirectionsService;
+        var directionsDisplay = new google.maps.DirectionsRenderer({map: map});
+
+        let street1 = (pair[0].StreetAddress().length === 0 ? "" : pair[0].StreetAddress() + ", "); 
+        let suburb1 = (pair[0].Suburb().length === 0 ? "" : pair[0].Suburb() + ", ");
+
+        let street2 = (pair[1].StreetAddress().length === 0 ? "" : pair[1].StreetAddress() + ", "); 
+        let suburb2 = (pair[1].Suburb().length === 0 ? "" : pair[1].Suburb() + ", ");
+
+        directionsService.route({
+            origin: street1 + suburb1 + pair[0].State() + ' ' + pair[0].Postcode(),
+            destination: street2 + suburb2 + pair[1].State() + ' ' + pair[1].Postcode(),
+            travelMode: google.maps.TravelMode.DRIVING
+        }, function(response, status) {
+            if (status === 'OK') {
+                directionsDisplay.setDirections(response);
+                showSteps(response, stepMarkerArray, stepDisplay, map);
+            }
+            else
+                alert('Directions request failed due to ' + status);
+        });
+    }
+
+    function showSteps(directionResult, markerArray, stepDisplay, map) {
+        var myRoute = directionResult.routes[0].legs[0];
+
+        for (var i = 0; i < myRoute.steps.length; i++) {
+            var marker = markerArray[i] = markerArray[i] || new google.maps.Marker;
+            marker.setMap(map);
+            marker.setPosition(myRoute.steps[i].start_location);
+
+            attachInstructionText(stepDisplay, marker, myRoute.steps[i].instructions, map);
+        }
+    }
+
+    function attachInstructionText(stepDisplay, marker, text, map) {
+        google.maps.event.addListener(marker, 'click', function() {
+            stepDisplay.setContent(text);
+            stepDisplay.open(map, marker);
+        });
     }
 
     function navigatorError(error) { 
