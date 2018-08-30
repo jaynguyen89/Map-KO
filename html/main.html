@@ -72,15 +72,8 @@
     </div>
 
     <div class="ui right labeled input">
-        <input type="text" placeholder="Search a person ...">
-        <div class="ui dropdown label">
-            <div class="text">By Name</div>
-            <i class="dropdown icon"></i>
-            <div class="menu">
-                <div class="item">By Name</div>
-                <div class="item">By Email</div>
-            </div>
-        </div>
+        <input type="text" placeholder="Search a person ..." data-bind="textInput: $root.Keyword, event: { keyup: $root.ProcessSearch }">
+        <select id="searchBy" class="ui dropdown label" data-bind="options: $root.SEARCH, value: SearchBy" />
         <div id="scroll_anchor"></div>
     </div>
     
@@ -100,8 +93,8 @@
                     </div>
                     <div class="row">
                         <input class="ui checkbox" type="checkbox" data-bind="checked: IsChosen" data-tooltip="Select this People" data-position="right center">
-                        <button class="microBtn ui red button right floated" data-bind="click: $root.DeletePeopleOnMap.bind(this, Id)">Delete</button>
-                        <button class="microBtn ui orange button right floated" data-bind="click: $root.EditPeopleOnMap.bind(this, Id)">Edit</button>
+                        <button class="microBtn ui red button right floated" data-bind="click: $root.DeletePeopleOnMap.bind(this, Id), disable: $root.ShouldDisable">Delete</button>
+                        <button class="microBtn ui orange button right floated" data-bind="click: $root.EditPeopleOnMap.bind(this, Id), disable: $root.ShouldDisable">Edit</button>
                     </div>
                 </div>
             </div>
@@ -209,7 +202,7 @@
                             <div class="eight wide column">
                                 <div class="field">
                                     <label for="State">State*</label>
-                                    <Select type="text" name="State" id="State" data-bind="options: $root.STATES, value: State, event: { change: $root.RelocatePeople }" />
+                                    <select type="text" name="State" id="State" data-bind="options: $root.STATES, value: State, event: { change: $root.RelocatePeople }" />
                                 </div>
                             </div>
                             <input type="text" name="Lat" id="Lat" data-bind="value: Lat" hidden />
@@ -254,8 +247,8 @@
                             <p style="color: purple; font-size: 11px;" data-bind="visible: !Long()">(Not in map)</p>
                         </div>
                         <div class="column">
-                            <button class="microBtn ui red button right floated" data-bind="click: $root.DeletePeople">Delete</button>
-                            <button class="microBtn ui orange button right floated" data-bind="click: $root.EditPeopleOnTable">Edit</button>
+                            <button name="tableDelete" class="microBtn ui red button right floated" data-bind="click: $root.DeletePeople">Delete</button>
+                            <button name="tableEdit" class="microBtn ui orange button right floated" data-bind="click: $root.EditPeopleOnTable">Edit</button>
                             <button class="microBtn ui blue button right floated" id="people_details" data-bind="click: $root.ViewDetails">Details</button>
                         </div>
                     </div>
@@ -269,17 +262,17 @@
             <tr>
                 <th></th>
                 <th colspan="5">
-                    <div class="ui right floated small red icon button" data-bind="click: $root.RevertDefault">
+                    <button class="ui right floated small red icon button" data-bind="click: $root.RevertDefault, enable: $root.IsDirty">
                         <i class="fas fa-reply"></i> Revert to Default
-                    </div>
-                    <div class="ui right floated small primary icon button" data-bind="click: $root.AddPeople">
+                    </button>
+                    <div name="addPeople" class="ui right floated small primary icon button" data-bind="click: $root.AddPeople">
                         <i class="fas fa-user-plus"></i> Add People
                     </div>
                     <div class="ui left floated small green icon button" data-bind="click: $root.CalculateDistance"
                          data-tooltip="Select exactly 2 People to calculate distance." data-position="top left">
                         <i class="fas fa-route"></i> Distance
                     </div>
-                    <div class="ui left floated small violet icon button" data-bind="click: $root.AutoDistance"
+                    <div name="autoDistance" class="ui left floated small violet icon button" data-bind="click: $root.AutoDistance"
                          data-tooltip="Randomly select 2 People then calculate distance" data-position="top left">
                         <i class="fas fa-random"></i> Auto Distance
                     </div>
@@ -397,7 +390,10 @@
         var self = this;
         self.STATES = ["ACT", "NSW", "NT", "QLD", "SA", "TAS", "VIC", "WA"];
         self.VIEWS = ["Both Views", "Map View", "Table View"];
+        self.SEARCH = ["By Name", "By Email"];
+        self.IsDirty = ko.observable(false);
         self.SelectedView = ko.observable("Both Views");
+        self.ShouldDisable = ko.observable(false);
         self.ShouldShowMarkerContent = ko.observable(false);
         self.SelectedMarker = ko.observable();
         self.ShouldShowEditPeople = ko.observable(false);
@@ -405,6 +401,9 @@
         self.TempPeople = null;
         self.ShouldShowCloseDetails = ko.observable(false);
         self.ShouldShowDistance = ko.observable(false);
+        self.PeopleBackup = ko.observableArray();
+        self.Keyword = ko.observable("");
+        self.SearchBy = ko.observable("Name");
         
         self.SwitchView = function () {
             if (self.SelectedView() === "Map View") {
@@ -437,9 +436,11 @@
             self.People.push(people);
         }
 
+        self.PeopleBackup(self.People());
+
         self.FullNames = ko.computed(function () {
             var fullNames = [];
-            ko.utils.arrayForEach(self.People(), function (p) {
+            ko.utils.arrayForEach(self.PeopleBackup(), function (p) {
                 let fullName = p.GiveName() + " " + p.FamilyName();
                 fullNames.push(fullName);
             });
@@ -449,7 +450,7 @@
 
         self.NormalizedAddresses = ko.computed(function () {
             var normalizedAddresses = [];
-            ko.utils.arrayForEach(self.People(), function (p) {
+            ko.utils.arrayForEach(self.PeopleBackup(), function (p) {
                 let building = (p.BuildingAddress().length === 0 ? "" : p.BuildingAddress() + ", "); 
                 let street = (p.StreetAddress().length === 0 ? "" : p.StreetAddress() + ", "); 
                 let suburb = (p.Suburb().length === 0 ? "" : p.Suburb() + ", ");
@@ -468,7 +469,7 @@
 
         self.Births = ko.computed(function () {
             var births = [];
-            ko.utils.arrayForEach(self.People(), function (p) {
+            ko.utils.arrayForEach(self.PeopleBackup(), function (p) {
                 let birth = p.Birthday() + "/" + p.Birthmonth() + "/" + p.Birthyear() + (p.BirthBC() ? " BC" : "");
                 births.push(birth);
             });
@@ -517,15 +518,23 @@
         }
 
         self.EditPeopleConfirmed = function () {
-            let edittedPeople = new PeopleModel(ko.toJS(self.SelectedPeople));
-            self.People.replace(self.TempPeople, edittedPeople);
-            
-            renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
-            self.ShouldShowMarkerContent(false);
-            self.SelectedMarker(null);
-            
-            self.ShouldShowEditPeople(false);
-            alert("New changes have been saved to people #" + edittedPeople.Id + " | " + self.FullNames()[edittedPeople.Id - 1]);
+            let shouldSave = isEditted(self.TempPeople, self.SelectedPeople);
+
+            if (shouldSave) {
+                let edittedPeople = new PeopleModel(ko.toJS(self.SelectedPeople));
+                self.People.replace(self.TempPeople, edittedPeople);
+                
+                renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+                self.ShouldShowMarkerContent(false);
+                self.SelectedMarker(null);
+                
+                self.ShouldShowEditPeople(false);
+                self.PeopleBackup(self.People());
+                self.IsDirty(true);
+                alert("New changes have been saved to people #" + edittedPeople.Id + " | " + self.FullNames()[edittedPeople.Id - 1]);
+            }
+            else
+                alert("No changes has been made. Please click \"Cancel\" button instead.");
         }
 
         self.DetectLocation = function () {
@@ -547,6 +556,8 @@
                 people.IsActive(false);
                 self.People.replace(temp, people);
                 self.ShouldShowMarkerContent(false);
+                self.PeopleBackup(self.People());
+                self.IsDirty(true);
                 renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent);
             }
 
@@ -563,6 +574,8 @@
             if (confirm("Are you sure to delete #" + peopleId + ": " + self.FullNames()[peopleId - 1] + "?")) { 
                 self.People()[peopleId - 1].IsActive(false);
                 self.ShouldShowMarkerContent(false);
+                self.PeopleBackup(self.People());
+                self.IsDirty(true);
                 renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             }
 
@@ -653,6 +666,8 @@
 
         self.AddPeopleConfirmed = function () {
             self.People.push(new PeopleModel(ko.toJS(self.NewPeople)));
+            self.PeopleBackup(self.People());
+            self.IsDirty(true);
             alert("A new people has been added. Please update its location.");
             $('#addPeopleModal').modal("toggle");
         }
@@ -720,6 +735,70 @@
             renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
         }
 
+        self.ProcessSearch = function () {
+            if (self.Keyword().length === 0) {
+                self.People(self.PeopleBackup());
+                
+                self.ShouldDisable(false);
+                $("button[name=tableDelete]").prop("disabled", false);
+                $("button[name=tableEdit]").prop("disabled", false);
+                $("div[name=addPeople]").removeClass("disabled");
+                $("div[name=autoDistance]").removeClass("disabled");
+            }
+            else if (self.Keyword() === "@") {
+                self.People(self.PeopleBackup());
+                renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+                alert("It won't search with email keywords.");
+
+                self.ShouldDisable(true);
+                $("button[name=tableDelete]").prop("disabled", true);
+                $("button[name=tableEdit]").prop("disabled", true);
+                $("div[name=addPeople]").addClass("disabled");
+                $("div[name=autoDistance]").addClass("disabled");
+            }
+            else {
+                var searchedPeople = [];
+                let keyword = self.Keyword().toLowerCase();
+
+                if (self.SearchBy() === "By Name")
+                    for (var i = 0; i < self.PeopleBackup().length; i++) {
+                        let fullName = self.PeopleBackup()[i].GiveName() + " " + self.PeopleBackup()[i].FamilyName();
+                        if (fullName.toLowerCase().indexOf(keyword) !== -1)
+                            searchedPeople.push(self.PeopleBackup()[i]);
+                    }
+                else
+                    for (var i = 0; i < self.PeopleBackup().length; i++) {
+                        let email = self.PeopleBackup()[i].Email().toLowerCase();
+                        let tokens = email.split("@");
+                        
+                        if (keyword === "." || keyword === ".c" || keyword === ".co" || keyword === ".com") {
+                            if (tokens[0].indexOf(keyword) !== - 1)
+                                searchedPeople.push(self.PeopleBackup()[i]);
+                        }
+                        else {
+                            if (email.indexOf(keyword) !== -1)
+                                searchedPeople.push(self.PeopleBackup()[i]);
+                        }
+                    }
+                
+                if (searchedPeople.length !== 0) {
+                    self.People(searchedPeople);
+                    renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
+                    $.scrollTo("#scroll_anchor", 1000);
+                }
+                else {
+                    self.People([]);
+                    alert("No matching people was found. Please try another keyword.");
+                }
+
+                self.ShouldDisable(true);
+                $("button[name=tableDelete]").prop("disabled", true);
+                $("button[name=tableEdit]").prop("disabled", true);
+                $("div[name=addPeople]").addClass("disabled");
+                $("div[name=autoDistance]").addClass("disabled");
+            }
+        }
+
         self.RevertDefault = function () {
             if (confirm("Everything will be set back to original state. Continue?")) {
                 self.People([]);
@@ -728,12 +807,20 @@
                     self.People.push(people);
                 }
 
+                self.PeopleBackup(self.People());
+                self.SelectedView = ko.observable("Both Views");
+                self.ShouldShowMarkerContent = ko.observable(false);
+                self.SelectedMarker = ko.observable();
+                self.ShouldShowEditPeople = ko.observable(false);
+                self.SelectedPeople = ko.observable();
+                self.TempPeople = null;
+                self.ShouldShowCloseDetails = ko.observable(false);
+                self.ShouldShowDistance = ko.observable(false);
+                self.IsDirty(false);
                 renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             }
         }
     }
-
-    var ViewModel = new ViewModel();
 
     function renderMap(locations, GetMarkerState, ShouldShowMarkerContent, SelectedMarker) {
         var map = new google.maps.Map(document.getElementById('main_map'), {
@@ -1028,6 +1115,21 @@
         });
     }
 
+    function isEditted(older, newer) {
+        let editted = new PeopleModel(ko.toJS(newer));
+
+        if (older.FamilyName() !== editted.FamilyName() || older.GiveName() !== editted.GiveName() ||
+            older.Email() !== editted.Email() || older.Phone() !== editted.Phone() ||
+            older.Birthday() !== editted.Birthday() || older.Birthmonth() !== editted.Birthmonth() ||
+            older.Birthyear() !== editted.Birthyear() || older.BirthBC() !== editted.BirthBC() ||
+            older.BuildingAddress() !== editted.BuildingAddress() || older.StreetAddress() !== editted.StreetAddress() ||
+            older.AlternateAddress() !== editted.AlternateAddress() || older.Suburb() !== editted.Suburb() ||
+            older.Postcode() !== editted.Postcode() || older.State() !== editted.State())
+            return true;
+        
+        return false;
+    }
+
     function navigatorError(error) { 
         switch (error.code) {
             case error.PERMISSION_DENIED:
@@ -1045,7 +1147,7 @@
         }
     }
     
-    ko.applyBindings(ViewModel);
+    ko.applyBindings(new ViewModel());
 
     $("document").ready(function () {
         $('.ui.dropdown').dropdown();
