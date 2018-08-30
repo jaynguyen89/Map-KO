@@ -105,7 +105,7 @@
         <div id="view_pair" data-bind="visible: $root.ShouldShowDistance">
             <div class="ui blue card" id="pair_details"></div>
             <p id="print_distance"></p>
-            <button class="mini ui black button" data-bind="click: $root.CloseDistance">Close Distance</button>
+            <button id="closeDistance" class="mini ui black button" data-bind="click: $root.CloseDistance">Close Distance</button>
         </div>
     </div>
 
@@ -417,6 +417,7 @@
                 $("#main_map").hide("slow");
                 $("#main_table").show("slow");
                 self.ShouldShowMarkerContent(false);
+                $("#closeDistance").click();
             }
             
             if (self.SelectedView() === "Both Views") {
@@ -497,6 +498,7 @@
         renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
 
         self.CancelEdit = function () {
+            self.TempPeople = null;
             self.SelectedPeople(null);
             self.ShouldShowEditPeople(false);
         }
@@ -600,6 +602,9 @@
 
         self.ViewDetails = function (people) {
             if (people.Lat() && people.Long()) {
+                if (self.SelectedView() === "Table View")
+                    $("#main_map").show("slow");
+
                 var infoWindow = new google.maps.InfoWindow();
                 var map = new google.maps.Map(document.getElementById('main_map'), {
                     zoom: 16,
@@ -665,11 +670,16 @@
         }
 
         self.AddPeopleConfirmed = function () {
-            self.People.push(new PeopleModel(ko.toJS(self.NewPeople)));
-            self.PeopleBackup(self.People());
-            self.IsDirty(true);
-            alert("A new people has been added. Please update its location.");
-            $('#addPeopleModal').modal("toggle");
+            var newPeople = new PeopleModel(ko.toJS(self.NewPeople));
+            if (newPeople.FamilyName().length === 0 || newPeople.GiveName().length === 0)
+                alert("Family Name and Give Name are required.");
+            else {
+                self.People.push(newPeople);
+                self.PeopleBackup(self.People());
+                self.IsDirty(true);
+                alert("A new people has been added. Please update its location.");
+                $('#addPeopleModal').modal("toggle");
+            }
         }
         
         self.DistancePair = ko.observableArray();
@@ -744,6 +754,8 @@
                 $("button[name=tableEdit]").prop("disabled", false);
                 $("div[name=addPeople]").removeClass("disabled");
                 $("div[name=autoDistance]").removeClass("disabled");
+
+                renderMap(self.locations, self.GetMarkerState, self.ShouldShowMarkerContent, self.SelectedMarker);
             }
             else if (self.Keyword() === "@") {
                 self.People(self.PeopleBackup());
